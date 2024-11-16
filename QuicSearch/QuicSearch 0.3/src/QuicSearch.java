@@ -1,24 +1,27 @@
 // Package declaration (adjust based on project structure)
 
 // Import necessary libraries for browser integration, UI, and HTTP requests
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -33,9 +36,10 @@ public class QuicSearch {
     private JFrame mainFrame;
     private JTextField searchInput;
     private JTextArea searchResults;
-    // private PlaceholderText pT;
-    JButton button;
-    // Document results;
+    private JButton button;
+    String res = "";
+
+    private JPanel rPanel;
 
     // Constructor for setting up the UI
     public QuicSearch() {
@@ -47,8 +51,13 @@ public class QuicSearch {
         mainFrame = new JFrame("QuicSearch Mini Tab");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setSize(600, 500);
-        mainFrame.setLayout(new FlowLayout());
+        mainFrame.setLayout(new BorderLayout());
+        mainFrame.setAlwaysOnTop(true);
         mainFrame.setResizable(true);
+
+        // Setting Icon
+        ImageIcon icon = new ImageIcon("QuicSearch.png");
+        mainFrame.setIconImage(icon.getImage());
 
         // Defining panel for search features
         JPanel sPanel = new JPanel();
@@ -56,14 +65,20 @@ public class QuicSearch {
         sPanel.setBackground(new Color(0x000328));
 
         // Defining panel for search results
-        JPanel rPanel = new JPanel();
-        rPanel.setPreferredSize(new Dimension(400, 420));
+        rPanel = new JPanel();
+        rPanel.setPreferredSize(new Dimension(500, 450));
         sPanel.setBackground(new Color(0x00063f));
+        mainFrame.setResizable(true);
+
+        // Defining another panel for the lols
+        JPanel truePanel = new JPanel();
+        truePanel.add(new JLabel("Powered Bu Google...for now..."));
 
         // Search button
         button = new JButton("Search");
         button.setPreferredSize(new Dimension(100, 30));
         button.setFont(new Font("Consolas", Font.PLAIN, 16));
+        button.setFocusable(false);
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -71,7 +86,12 @@ public class QuicSearch {
             }
 
             private void performSearch(String text) {
-                throw new UnsupportedOperationException("Unimplemented method 'performSearch'");
+                try {
+                    search(text);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                rPanel.revalidate();
             }
         });
 
@@ -89,7 +109,12 @@ public class QuicSearch {
             }
 
             private void performSearch(String text) {
-                throw new UnsupportedOperationException("Unimplemented method 'performSearch'");
+                try {
+                    search(text);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                rPanel.revalidate();
             }
         });
 
@@ -104,71 +129,65 @@ public class QuicSearch {
         rPanel.add(searchResults);
 
         // Adding components to the frame
-        mainFrame.add(sPanel);
-        mainFrame.add(rPanel);
+        mainFrame.add(sPanel, BorderLayout.NORTH);
+        mainFrame.add(rPanel, BorderLayout.SOUTH);
+        // mainFrame.add(truePanel, BorderLayout.SOUTH);
 
-        // mainFrame.pack();
-
-        // Placeholder ***Text NEEDS FIX***
+        // Placeholder Text ***NEEDS FIX***
         // pT = new PlaceholderText(" ");
         // pT.setPreferredSize(new Dimension(100, 50));
         // pT.setPlaceholder("Enter Search here...");
         // pT.setBackground(Color.gray);
         // mainFrame.add(pT);
 
+        mainFrame.setResizable(true);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setVisible(true);
     }
 
-    public File webToFile(String url) {
-        try {
+    public void search(String query) throws IOException {
 
-            // New url to AI
-            URL chtGPT = new URL(url);
+        // Format query in case of existing spaces
+        Pattern space = Pattern.compile(" ");
+        Matcher sMatch = space.matcher(query);
 
-            // Start an Input stream
-            URLConnection conn = chtGPT.openConnection();
-            InputStream iStream = conn.getInputStream();
-
-            // Read bytes from website
-            try (BufferedReader bReader = new BufferedReader(new InputStreamReader(iStream))) {
-                String ln = null;
-                // Create result file
-                File results = new File("Search-Results.txt");
-
-                // Write to file
-                FileWriter myWriter = new FileWriter(results);
-
-                while ((ln = bReader.readLine()) != null) {
-                    System.out.println(ln);
-                    myWriter.write(ln);
-                }
-                myWriter.close();
-                return results;
-            }
-
-        } catch (MalformedURLException e) {
-            System.err.println("MalformedURLException");
-            e.printStackTrace();
-            return null;
-        } catch (IOException q) {
-            System.err.println("IOException");
-            q.printStackTrace();
-            return null;
+        if (sMatch.find()) {
+            query = sMatch.replaceAll("+");
         }
+
+        System.out.println(query);
+
+        // Store resulting page into a file for manipualtion
+        // File resFile = q.webToFile("https://www.google.com/search?q=" + query);
+
+        var resDoc = Jsoup.connect("https://www.google.com/search?q=" + query).get();
+        var names = resDoc.getElementsByClass("LC20lb MBeuO DKV0Md");
+        var sites = resDoc.getElementsByClass("qLRx3b tjvcx GvPZzd cHaqb");
+        int i = 1;
+        int j = 0;
+        for (Element n : names) {
+
+            System.out.print(i + ". " + n.text());
+            res += i + ". " + n.text();
+            i++;
+            System.out.println("@ " + sites.get(j).text());
+            res += "@ " + sites.get(j).text() + "\n";
+            j++;
+
+            // rPanel.add(new JLabel("" + res));
+            // Add results to result pane
+            searchResults.setText(res);
+
+            // rPanel.repaint();
+            // rPanel.add(new JLabel("Yeah..."));
+            // Refresh panel so that results are visible
+            rPanel.revalidate();
+        }
+        rPanel.revalidate();
+
     }
 
     public static void main(String[] args) throws IOException {
         QuicSearch q = new QuicSearch();
-        // String html = "<html><head><title>First parse</title></head>"
-        // + "<body><p>Parsed HTML into a doc.<p></body></html>";
-
-        // Get html from webpage
-        File newFile = q.webToFile("https://www.google.com/");
-
-        // Turn file into document editable with Jsoup
-        org.jsoup.nodes.Document doc = Jsoup.parse(newFile);
-
-        System.out.println(doc.getElementsByTag("title").get(0).text());
     }
 }
